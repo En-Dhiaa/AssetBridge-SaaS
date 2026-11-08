@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Link from "next/link";
 import {
   Download,
   Link as LinkIcon,
@@ -9,343 +10,427 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Server,
+  FileText,
+  Sparkles,
   Layers,
-  ExternalLink,
-  Lock,
-  RefreshCw,
   ArrowRight,
-  HardDrive,
-  Cpu,
-  KeyRound,
-  FileCheck
+  CreditCard,
+  Coins,
+  History,
+  Check,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Image as ImageIcon,
+  Video,
+  FileCode,
+  Box,
+  Copy,
+  ExternalLink
 } from "lucide-react";
 import { api, AnalyzeResult } from "@/lib/api";
 import { formatBytes } from "@/lib/utils";
 
-interface PartnerStatus {
-  id: string;
-  name: string;
-  iconText: string;
-  badgeColor: string;
-  active: boolean;
-  quotaRemaining: string;
-}
-
-const PARTNER_PROVIDERS: PartnerStatus[] = [
-  { id: "magnific", name: "Magnific AI", iconText: "MAG", badgeColor: "from-pink-500 to-rose-600", active: true, quotaRemaining: "3,580 / 5,000" },
-  { id: "motionarray", name: "Motion Array", iconText: "MA", badgeColor: "from-amber-500 to-orange-600", active: true, quotaRemaining: "20,880 / 25,000" },
-  { id: "envato", name: "Envato Elements", iconText: "ENV", badgeColor: "from-emerald-500 to-teal-600", active: true, quotaRemaining: "12,570 / 15,000" },
-  { id: "freepik", name: "Freepik Enterprise", iconText: "FPK", badgeColor: "from-blue-500 to-indigo-600", active: true, quotaRemaining: "43,880 / 50,000" },
-  { id: "storyblocks", name: "Storyblocks", iconText: "SB", badgeColor: "from-purple-500 to-violet-600", active: true, quotaRemaining: "16,900 / 20,000" },
-  { id: "artgrid", name: "Artgrid Cinema", iconText: "AG", badgeColor: "from-yellow-500 to-amber-600", active: true, quotaRemaining: "8,160 / 10,000" }
+// Example URLs for instant testing
+const QUICK_TEST_LINKS = [
+  {
+    name: "Magnific AI 8K Upscale",
+    provider: "Magnific AI",
+    icon: "✨",
+    url: "https://magnific.ai/upscale/cyberpunk-neon-city-8k-render",
+  },
+  {
+    name: "Freepik Luxury Vector Logo",
+    provider: "Freepik",
+    icon: "🎨",
+    url: "https://www.freepik.com/premium-vector/luxury-golden-brand-identity-vector-template_9845120.htm",
+  },
+  {
+    name: "Motion Array Premiere HUD Pack",
+    provider: "Motion Array",
+    icon: "🎬",
+    url: "https://motionarray.com/premiere-pro-templates/cyber-hud-titles-124958",
+  },
+  {
+    name: "Envato 3D Branding Mockup",
+    provider: "Envato Elements",
+    icon: "📦",
+    url: "https://elements.envato.com/luxury-perfume-bottle-mockup-3D-947261",
+  },
 ];
 
-export default function DashboardPage() {
-  const [targetUrl, setTargetUrl] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const SUPPORTED_FORMATS = [
+  { name: "Vectors", exts: "AI, EPS, SVG", icon: FileCode, desc: "Fully editable vector curves" },
+  { name: "Photos & Renders", exts: "JPG, PNG, WebP", icon: ImageIcon, desc: "Original 4K/8K resolution" },
+  { name: "Templates & PSD", exts: "PSD, Figma, PR", icon: Layers, desc: "Layered production project files" },
+  { name: "Footage & Video", exts: "MP4, MOV, ProRes", icon: Video, desc: "Watermark-free raw video" },
+  { name: "3D & Assets", exts: "OBJ, FBX, GLB", icon: Box, desc: "Clean textured 3D models" },
+];
 
-  // Streaming & Progress State
+const PRICING_PACKS = [
+  {
+    id: "pack_starter",
+    name: "Starter Pack",
+    credits: 10,
+    price: "$2.99",
+    perItem: "$0.29 / asset",
+    popular: false,
+    features: [
+      "10 High-Speed Downloads",
+      "Magnific 8K & Freepik Assets",
+      "Original Clean Watermark-Free Files",
+      "No Expiration Date",
+      "Commercial License Clearance",
+    ],
+  },
+  {
+    id: "pack_pro",
+    name: "Pro Designer Pack",
+    credits: 50,
+    price: "$9.99",
+    perItem: "$0.19 / asset",
+    popular: true,
+    features: [
+      "50 High-Speed Downloads",
+      "All Platforms (Magnific, Envato, MA)",
+      "16-Connection Parallel Streaming",
+      "Priority API Queue",
+      "Commercial Rights Certificate Included",
+      "No Expiration Date",
+    ],
+  },
+  {
+    id: "pack_studio",
+    name: "Agency Studio Pack",
+    credits: 200,
+    price: "$24.99",
+    perItem: "$0.12 / asset",
+    popular: false,
+    features: [
+      "200 High-Speed Downloads",
+      "Full 4K/8K Video & 3D Access",
+      "Instant Cloud S3 Webhook Sync",
+      "Multi-User Team Sharing",
+      "Dedicated Enterprise SLA Support",
+      "Tamper-Evident Audit Verification",
+    ],
+  },
+];
+
+const FAQS = [
+  {
+    q: "How does Magnific Downloader work?",
+    a: "Simply copy any asset link from Magnific, Freepik, Motion Array, or Envato Elements, paste it into our search bar, and click 'Download Now'. Our system authenticates via authorized enterprise APIs, retrieves the original full-resolution file without any watermarks, and delivers it via a 16-connection parallel stream.",
+  },
+  {
+    q: "Are the downloaded files 100% clean and original?",
+    a: "Yes! You receive the exact original files directly from the platform's cloud storage (AI vectors, PSD layers, 8K PNG renders, 4K ProRes video), identical to a paid direct subscriber download.",
+  },
+  {
+    q: "Can I use the downloaded designs for commercial client work?",
+    a: "Yes. Every download is issued under an enterprise partner commercial distribution license with an immutable audit log and SLA agreement reference for full audit compliance.",
+  },
+  {
+    q: "Do purchased credits ever expire?",
+    a: "No! Your wallet credits never expire. Use them whenever you need an asset, whether today or six months from now.",
+  },
+];
+
+export default function MagnificDownloaderPage() {
+  const [urlInput, setUrlInput] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [assetData, setAssetData] = useState<AnalyzeResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // User Wallet Credits (Simulated SaaS State)
+  const [creditsBalance, setCreditsBalance] = useState(15);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+
+  // Download streaming state
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamProgress, setStreamProgress] = useState(0);
-  const [speedMbps, setSpeedMbps] = useState(0);
-  const [activeConnections, setActiveConnections] = useState(16);
+  const [streamSpeed, setStreamSpeed] = useState(0);
 
-  // Partner connect modal state
-  const [selectedPartnerForConnect, setSelectedPartnerForConnect] = useState<PartnerStatus | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [connecting, setConnecting] = useState(false);
-  const [connectMessage, setConnectMessage] = useState<string | null>(null);
+  // FAQ accordion state
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  // Handle URL analyze
-  const handleAnalyze = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!targetUrl.trim()) return;
+  // Analyze URL handler
+  const handleAnalyze = async (urlToAnalyze?: string) => {
+    const target = (urlToAnalyze || urlInput).trim();
+    if (!target) return;
+
+    if (urlToAnalyze) {
+      setUrlInput(urlToAnalyze);
+    }
 
     setAnalyzing(true);
-    setError(null);
-    setAnalysis(null);
+    setErrorMessage(null);
+    setAssetData(null);
     setStreamProgress(0);
 
     try {
-      const res = await api.analyzeUrl(targetUrl.trim());
-      setAnalysis(res);
+      const res = await api.analyzeUrl(target);
+      setAssetData(res);
     } catch (err: any) {
-      setError(err.message || "Failed to analyze URL. Ensure it matches authorized partner domains.");
+      setErrorMessage(
+        err.message ||
+          "Could not analyze asset URL. Please verify the URL belongs to Magnific, Freepik, Motion Array, or Envato."
+      );
     } finally {
       setAnalyzing(false);
     }
   };
 
-  // Trigger high-speed direct stream
-  const handleStartStream = () => {
-    if (!targetUrl) return;
-    setIsStreaming(true);
-    setStreamProgress(5);
-    setSpeedMbps(42.8);
+  // Trigger high-speed direct download
+  const handleTriggerDownload = () => {
+    if (!urlInput.trim()) return;
 
-    // Simulate connection thread updates & trigger native browser stream
-    const streamUrl = api.getStreamUrl(targetUrl);
+    if (creditsBalance <= 0) {
+      setShowTopUpModal(true);
+      return;
+    }
+
+    setIsStreaming(true);
+    setStreamProgress(8);
+    setStreamSpeed(45.2);
+
+    // Deduct 1 credit
+    setCreditsBalance((prev) => Math.max(0, prev - 1));
+
+    // Direct HTTP Stream URL
+    const streamUrl = api.getStreamUrl(urlInput.trim());
 
     const interval = setInterval(() => {
       setStreamProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setIsStreaming(false);
-          setSpeedMbps(0);
+          setStreamSpeed(0);
           return 100;
         }
-        const delta = Math.floor(Math.random() * 18) + 12;
-        setSpeedMbps(parseFloat((38 + Math.random() * 15).toFixed(1)));
+        const delta = Math.floor(Math.random() * 20) + 15;
+        setStreamSpeed(parseFloat((40 + Math.random() * 18).toFixed(1)));
         return Math.min(prev + delta, 100);
       });
-    }, 400);
+    }, 350);
 
-    // Prompt browser file download stream
+    // Pipe download stream to browser
     window.location.href = streamUrl;
   };
 
-  // Connect partner credentials
-  const handleConnectSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPartnerForConnect || !apiKeyInput.trim()) return;
-    setConnecting(true);
-    setConnectMessage(null);
+  const handleQuickPaste = async () => {
     try {
-      await api.connectPartnerAccount(
-        selectedPartnerForConnect.id,
-        `${selectedPartnerForConnect.name} Account`,
-        apiKeyInput.trim()
-      );
-      setConnectMessage(`Successfully encrypted and saved AES-256 credentials for ${selectedPartnerForConnect.name}!`);
-      setTimeout(() => {
-        setSelectedPartnerForConnect(null);
-        setApiKeyInput("");
-        setConnectMessage(null);
-      }, 1500);
-    } catch (err: any) {
-      setConnectMessage("Error saving credentials: " + err.message);
-    } finally {
-      setConnecting(false);
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setUrlInput(text);
+        handleAnalyze(text);
+      }
+    } catch {
+      // fallback
     }
   };
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner: Enterprise Partner Accounts */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-cyan-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Active Authorized Partner Integrations (AES-256 Secured)
-            </h2>
-          </div>
-          <span className="text-xs text-slate-400">
-            6 Official APIs Connected • Click to update token
-          </span>
+    <div className="space-y-16 pb-12">
+      {/* Hero Downloader Section (magnificdownloader.com Style) */}
+      <section className="relative text-center pt-6 pb-12 space-y-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs font-semibold text-blue-400">
+          <Sparkles className="h-4 w-4 text-cyan-400" />
+          <span>The #1 Instant Magnific & Design Stock Asset Downloader</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {PARTNER_PROVIDERS.map((partner) => (
-            <div
-              key={partner.id}
-              onClick={() => setSelectedPartnerForConnect(partner)}
-              className="glass-panel p-3 rounded-xl border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900/80 transition cursor-pointer group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded bg-gradient-to-r ${partner.badgeColor} text-white shadow-sm`}>
-                  {partner.iconText}
-                </span>
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
-              </div>
-              <h3 className="text-xs font-semibold text-slate-200 group-hover:text-blue-400 transition truncate">
-                {partner.name}
-              </h3>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Quota: <span className="text-emerald-400 font-mono">{partner.quotaRemaining}</span>
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Main Download Card */}
-      <section className="glass-panel rounded-2xl border border-slate-800 p-6 sm:p-8 glow-blue relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Zap className="h-48 w-48 text-blue-500" />
-        </div>
-
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-medium text-blue-400">
-            <Zap className="h-3.5 w-3.5" />
-            16-Connection Parallel Multi-Stream Engine
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Commercial Asset Download Gateway
+        <div className="max-w-4xl mx-auto space-y-4">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            Download <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent">Magnific & Stock Assets</span> Instantly
           </h1>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            Paste any authorized design, template, 8K upscale, or footage link from Magnific, Motion Array, Envato, Freepik, Storyblocks, or Artgrid. We verify partner compliance and deliver via zero-wait multi-connection streaming.
+          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal">
+            No expensive monthly subscriptions. Paste any Magnific AI, Freepik, Motion Array, or Envato Elements link and download the full original watermark-free file in seconds.
           </p>
         </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleAnalyze} className="mt-6 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <LinkIcon className="h-4 w-4 text-slate-500" />
-            </div>
-            <input
-              type="url"
-              value={targetUrl}
-              onChange={(e) => setTargetUrl(e.target.value)}
-              placeholder="Paste item URL (e.g., https://elements.envato.com/cyber-title-pack-ABC123)..."
-              required
-              className="w-full pl-10 pr-4 py-3.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-mono"
-            />
+        {/* Large Prominent URL Input Card */}
+        <div className="max-w-3xl mx-auto mt-8">
+          <div className="glass-panel p-2.5 sm:p-3 rounded-2xl border border-slate-700/80 shadow-2xl shadow-blue-900/20 glow-blue">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAnalyze();
+              }}
+              className="flex flex-col sm:flex-row items-center gap-2"
+            >
+              <div className="relative w-full flex-1 flex items-center">
+                <div className="absolute left-4 text-slate-500 pointer-events-none">
+                  <LinkIcon className="h-5 w-5" />
+                </div>
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="Paste asset URL (e.g., https://magnific.ai/upscale/... or freepik.com/...)"
+                  required
+                  className="w-full pl-12 pr-20 py-4 bg-slate-900/90 border border-transparent rounded-xl text-sm sm:text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/80 font-mono transition"
+                />
+                <button
+                  type="button"
+                  onClick={handleQuickPaste}
+                  className="absolute right-3 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition"
+                  title="Paste from clipboard"
+                >
+                  Paste
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={analyzing || !urlInput.trim()}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-sm sm:text-base rounded-xl shadow-lg shadow-blue-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {analyzing ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-5 w-5" />
+                    <span>Download Now</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
 
-          <button
-            type="submit"
-            disabled={analyzing || !targetUrl.trim()}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-600/30 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analyzing via API...
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4" />
-                Inspect & Fetch
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Error Alert */}
-        {error && (
-          <div className="mt-4 p-4 rounded-xl bg-red-950/40 border border-red-800/60 flex items-start gap-3 text-sm text-red-300">
-            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-red-200">Validation or Upstream Error</p>
-              <p className="text-xs text-red-300/90 mt-0.5">{error}</p>
-            </div>
+          {/* Quick Click-to-Test Badges */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+            <span className="text-slate-400 font-medium">Try Sample:</span>
+            {QUICK_TEST_LINKS.map((sample, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleAnalyze(sample.url)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-cyan-400 transition"
+              >
+                <span>{sample.icon}</span>
+                <span>{sample.name}</span>
+              </button>
+            ))}
           </div>
-        )}
+
+          {/* Error Message Alert */}
+          {errorMessage && (
+            <div className="mt-6 p-4 rounded-xl bg-red-950/40 border border-red-800/80 text-left text-sm text-red-300 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-200">Unable to Fetch Asset</p>
+                <p className="text-xs text-red-300/90 mt-0.5">{errorMessage}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
-      {/* Analysis Result Card */}
-      {analysis && (
-        <section className="glass-panel rounded-2xl border border-slate-800 p-6 sm:p-8 space-y-6 glow-emerald animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center border-b border-slate-800 pb-6">
+      {/* Asset Preview & Direct Download Card (When Analyzed) */}
+      {assetData && (
+        <section className="max-w-4xl mx-auto glass-panel rounded-2xl border border-slate-700 p-6 sm:p-8 space-y-6 glow-emerald animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border-b border-slate-800 pb-6">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Verified SLA Clearance
+                  Clean Original File Verified
                 </span>
-                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono">
-                  {analysis.partner_name}
+                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono font-bold">
+                  {assetData.partner_name}
                 </span>
-                {analysis.cached && (
-                  <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-mono">
-                    Redis Cached (10m TTL)
-                  </span>
-                )}
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white">
-                {analysis.metadata.title}
+                {assetData.metadata.title}
               </h2>
-              <p className="text-xs text-slate-400 max-w-2xl">
-                {analysis.metadata.description}
+              <p className="text-xs text-slate-400 max-w-xl">
+                {assetData.metadata.description}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            {/* Download CTA button with Credit badge */}
+            <div className="w-full md:w-auto flex flex-col items-end gap-2">
               <button
-                onClick={handleStartStream}
+                onClick={handleTriggerDownload}
                 disabled={isStreaming}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition disabled:opacity-50"
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-base rounded-xl shadow-lg shadow-emerald-500/30 transition disabled:opacity-50"
               >
-                <Download className="h-4 w-4" />
-                {isStreaming ? "Streaming..." : "Download (16x Stream)"}
+                <Download className="h-5 w-5" />
+                <span>{isStreaming ? "Streaming to Browser..." : "Download Original (1 Credit)"}</span>
               </button>
+              <span className="text-[11px] text-slate-400">
+                Your Balance: <strong className="text-cyan-400">{creditsBalance} Credits</strong> remaining
+              </span>
             </div>
           </div>
 
-          {/* Metadata Specs Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-[11px] text-slate-400">File Size</p>
-              <p className="text-sm font-bold text-slate-200 mt-1 font-mono">
-                {formatBytes(analysis.metadata.file_size_bytes)}
+          {/* Asset Specs Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="text-slate-400">File Size</span>
+              <p className="text-sm font-bold text-white mt-1 font-mono">
+                {formatBytes(assetData.metadata.file_size_bytes)}
               </p>
             </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-[11px] text-slate-400">Format / Extension</p>
-              <p className="text-sm font-bold text-slate-200 mt-1 uppercase font-mono">
-                {analysis.metadata.format} ({analysis.metadata.file_type})
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="text-slate-400">Format</span>
+              <p className="text-sm font-bold text-white mt-1 uppercase font-mono">
+                {assetData.metadata.format} ({assetData.metadata.file_type})
               </p>
             </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-[11px] text-slate-400">Agreement Reference</p>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="text-slate-400">License Clearance</span>
+              <p className="text-sm font-bold text-emerald-400 mt-1 truncate">
+                Commercial Cleared
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="text-slate-400">SLA Reference</span>
               <p className="text-sm font-bold text-blue-400 mt-1 font-mono truncate">
-                {analysis.metadata.agreement_reference}
-              </p>
-            </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-[11px] text-slate-400">Partner Quota Balance</p>
-              <p className="text-sm font-bold text-emerald-400 mt-1 font-mono">
-                {analysis.quota.remaining_quota.toLocaleString()} remaining
+                {assetData.metadata.agreement_reference}
               </p>
             </div>
           </div>
 
-          {/* 16-Connection Parallel Visualizer */}
-          <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
+          {/* 16-Connection Parallel Thread Stream Bar */}
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-cyan-400" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Parallel Streaming Pipeline (16 Concurrent Async HTTP/2 Connections)
-                </h3>
+                <Zap className="h-4 w-4 text-cyan-400" />
+                <span className="font-semibold text-slate-200">
+                  16x Multi-Connection Stream Progress
+                </span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-mono">
-                <span className="text-slate-400">Speed:</span>
-                <span className="text-cyan-400 font-bold">{speedMbps} MB/s</span>
-                <span className="text-slate-600">|</span>
-                <span className="text-slate-400">Progress:</span>
-                <span className="text-emerald-400 font-bold">{streamProgress}%</span>
+              <div className="flex items-center gap-3 font-mono">
+                <span className="text-slate-400">Speed: <strong className="text-cyan-400">{streamSpeed} MB/s</strong></span>
+                <span className="text-slate-400">Done: <strong className="text-emerald-400">{streamProgress}%</strong></span>
               </div>
             </div>
 
-            {/* 16 Connection Thread Blocks */}
-            <div className="grid grid-cols-8 sm:grid-cols-16 gap-1.5">
-              {Array.from({ length: 16 }).map((_, idx) => {
-                const isActive = isStreaming && streamProgress > 0 && streamProgress < 100;
+            <div className="grid grid-cols-8 sm:grid-cols-16 gap-1">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const active = isStreaming && streamProgress > 0 && streamProgress < 100;
                 return (
                   <div
-                    key={idx}
-                    className={`h-7 rounded flex flex-col items-center justify-center border transition-all ${
-                      isActive
-                        ? "bg-blue-600/30 border-blue-400 animate-pulse text-cyan-300"
+                    key={i}
+                    className={`h-5 rounded flex items-center justify-center text-[8px] font-mono font-bold transition-all ${
+                      active
+                        ? "bg-blue-600/40 border border-blue-400 text-cyan-300 animate-pulse"
                         : streamProgress === 100
-                        ? "bg-emerald-600/30 border-emerald-500 text-emerald-300"
-                        : "bg-slate-950 border-slate-800 text-slate-600"
+                        ? "bg-emerald-600/40 border border-emerald-400 text-emerald-300"
+                        : "bg-slate-950 border border-slate-800 text-slate-600"
                     }`}
                   >
-                    <span className="text-[9px] font-mono font-bold">T{idx + 1}</span>
+                    T{i + 1}
                   </div>
                 );
               })}
             </div>
 
-            {/* Overall Progress Bar */}
-            <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 transition-all duration-300"
                 style={{ width: `${streamProgress}%` }}
@@ -355,80 +440,180 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Connect Account Modal / Dialog */}
-      {selectedPartnerForConnect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="glass-panel w-full max-w-lg rounded-2xl border border-slate-700 p-6 sm:p-8 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className={`h-8 w-8 rounded-lg bg-gradient-to-tr ${selectedPartnerForConnect.badgeColor} flex items-center justify-center text-xs font-bold text-white`}>
-                  <KeyRound className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">
-                    Link {selectedPartnerForConnect.name}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Official API Token / OAuth2 Secret
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedPartnerForConnect(null)}
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleConnectSubmit} className="space-y-4">
-              <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-900/50 text-xs text-blue-300 flex items-start gap-2">
-                <Lock className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                <span>
-                  All tokens are encrypted immediately with <strong>AES-256-GCM</strong> using an isolated hardware-grade master key. Plaintext secrets are never stored at rest.
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Partner API Key or OAuth Bearer Token
-                </label>
-                <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder={`Enter your verified ${selectedPartnerForConnect.name} secret...`}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                />
-              </div>
-
-              {connectMessage && (
-                <p className="text-xs text-emerald-400 font-medium">
-                  {connectMessage}
-                </p>
-              )}
-
-              <div className="flex items-center justify-end gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedPartnerForConnect(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={connecting || !apiKeyInput.trim()}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-md transition disabled:opacity-50"
-                >
-                  {connecting ? "Encrypting & Saving..." : "Encrypt & Save"}
-                </button>
-              </div>
-            </form>
+      {/* Supported Platforms Banner */}
+      <section className="text-center space-y-4 max-w-4xl mx-auto">
+        <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
+          Supported Partner Platforms & Formats
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 opacity-80">
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-pink-500" /> Magnific AI
+          </div>
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-blue-500" /> Freepik Premium
+          </div>
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-emerald-500" /> Envato Elements
+          </div>
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-amber-500" /> Motion Array
+          </div>
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-purple-500" /> Storyblocks
+          </div>
+          <div className="flex items-center gap-2 font-bold text-slate-200 text-sm">
+            <span className="h-3 w-3 rounded-full bg-yellow-500" /> Artgrid Cinema
           </div>
         </div>
-      )}
+      </section>
+
+      {/* Supported Formats Grid */}
+      <section className="max-w-5xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            All Creative Asset Formats Supported
+          </h2>
+          <p className="text-sm text-slate-400">
+            Download vector files, layered PSD templates, 8K PNGs, 4K video clips, or 3D models with one click.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {SUPPORTED_FORMATS.map((fmt, idx) => {
+            const Icon = fmt.icon;
+            return (
+              <div
+                key={idx}
+                className="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition space-y-2 text-center flex flex-col items-center"
+              >
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-bold text-white">{fmt.name}</h3>
+                <span className="text-[11px] font-mono font-semibold text-cyan-400">
+                  {fmt.exts}
+                </span>
+                <p className="text-xs text-slate-400">{fmt.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Pricing / Credit Packs Section (magnificdownloader.com model) */}
+      <section id="pricing" className="max-w-5xl mx-auto space-y-8">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
+            <Coins className="h-3.5 w-3.5" />
+            Simple Pay-As-You-Go Credits
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
+            Choose Your Credit Pack
+          </h2>
+          <p className="text-sm text-slate-400 max-w-lg mx-auto">
+            1 Download = 1 Credit. No subscription lock-in. Credits never expire and work across all supported platforms.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {PRICING_PACKS.map((pack) => (
+            <div
+              key={pack.id}
+              className={`glass-panel rounded-2xl p-6 sm:p-8 flex flex-col justify-between border relative transition-all ${
+                pack.popular
+                  ? "border-blue-500/80 shadow-2xl shadow-blue-500/20 scale-[1.02] bg-slate-900/90"
+                  : "border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              {pack.popular && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[11px] font-bold shadow-md uppercase tracking-wider">
+                  Most Popular
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white">{pack.name}</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-white">
+                    {pack.price}
+                  </span>
+                  <span className="text-xs text-slate-400">{pack.perItem}</span>
+                </div>
+                <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <Coins className="h-3.5 w-3.5" />
+                  {pack.credits} Credits Included
+                </p>
+
+                <ul className="space-y-2.5 pt-4 border-t border-slate-800 text-xs text-slate-300">
+                  {pack.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-cyan-400 shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCreditsBalance((prev) => prev + pack.credits);
+                  alert(`Successfully topped up ${pack.credits} credits to your balance!`);
+                }}
+                className={`mt-6 w-full py-3 rounded-xl font-bold text-xs sm:text-sm transition shadow-lg ${
+                  pack.popular
+                    ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-blue-500/30"
+                    : "bg-slate-800 hover:bg-slate-700 text-white"
+                }`}
+              >
+                Top Up {pack.credits} Credits
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ Accordion Section */}
+      <section className="max-w-3xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-xs text-slate-400">
+            Everything you need to know about Magnific Downloader and asset rights.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {FAQS.map((faq, idx) => {
+            const isOpen = expandedFaq === idx;
+            return (
+              <div
+                key={idx}
+                className="glass-panel rounded-xl border border-slate-800 overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                  className="w-full py-4 px-5 text-left flex items-center justify-between text-sm font-semibold text-slate-200 hover:text-white transition"
+                >
+                  <span>{faq.q}</span>
+                  {isOpen ? (
+                    <ChevronUp className="h-4 w-4 text-cyan-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-slate-500" />
+                  )}
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-4 text-xs text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

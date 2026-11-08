@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AssetBridge SaaS - Enterprise Asset Gateway",
-  description: "High-speed authorized design & media downloader with 16-connection multi-stream and cryptographic compliance.",
+  title: "MagnificDownloader Pro — Instant Clean Asset & Stock Downloader",
+  description: "The fastest Magnific, Freepik, Motion Array and Envato asset downloader. Download original watermark-free files with 16-connection parallel streaming.",
 };
 
 export default function RootLayout({
