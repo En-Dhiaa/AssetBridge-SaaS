@@ -84,7 +84,7 @@ class AuditLogEntry(Base):
     """
     __tablename__ = "audit_logs"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     created_at = Column(DateTime(timezone=True), default=get_utc_now, index=True)
     user_id = Column(String(36), index=True, nullable=False)
     user_ip = Column(String(64), nullable=False)

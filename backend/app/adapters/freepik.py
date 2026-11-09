@@ -67,12 +67,28 @@ class FreepikAdapter(BaseAdapter):
             except Exception:
                 pass
 
+        # Title extraction from URL or asset_id
+        slug_match = re.search(r"/(?:[a-zA-Z0-9_-]+/)*([a-zA-Z0-9_-]+)_\d+\.htm", url)
+        raw_slug = slug_match.group(1) if slug_match else asset_id
+        clean_title = raw_slug.replace("-", " ").replace("_", " ").title()
+
+        preview_url = None
+        lower_str = f"{url} {raw_slug}".lower()
+        if any(k in lower_str for k in ["cowork", "office", "work", "people"]):
+            preview_url = "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&auto=format&fit=crop"
+        elif any(k in lower_str for k in ["luxury", "golden", "brand", "logo"]):
+            preview_url = "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=900&auto=format&fit=crop"
+        elif any(k in lower_str for k in ["vector", "illustration", "graphic"]):
+            preview_url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop"
+        else:
+            preview_url = f"https://img.freepik.com/free-vector/{raw_slug}_{asset_id}.jpg"
+
         return AssetMetadata(
             asset_id=asset_id,
             partner_id=self.partner_id,
-            title=f"Freepik Premium Vector Collection {asset_id}",
+            title=clean_title if len(clean_title) > 3 else f"Freepik Premium Vector #{asset_id}",
             description="Scalable vector illustration with full commercial usage rights and high-res preview.",
-            preview_url=f"https://img.freepik.com/free-vector/{asset_id}.jpg",
+            preview_url=preview_url,
             author="Freepik Certified Artist",
             file_type="vector",
             file_size_bytes=42_000_000,

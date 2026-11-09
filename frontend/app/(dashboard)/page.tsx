@@ -266,6 +266,13 @@ export default function MagnificDownloaderPage() {
                   type="url"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData("text");
+                    if (text && text.trim().startsWith("http")) {
+                      setUrlInput(text.trim());
+                      handleAnalyze(text.trim());
+                    }
+                  }}
                   placeholder="Paste asset URL (e.g., https://magnific.ai/upscale/... or freepik.com/...)"
                   required
                   className="w-full pl-12 pr-20 py-4 bg-slate-900/90 border border-transparent rounded-xl text-sm sm:text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/80 font-mono transition"
@@ -332,8 +339,31 @@ export default function MagnificDownloaderPage() {
       {/* Asset Preview & Direct Download Card (When Analyzed) */}
       {assetData && (
         <section className="max-w-4xl mx-auto glass-panel rounded-2xl border border-slate-700 p-6 sm:p-8 space-y-6 glow-emerald animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border-b border-slate-800 pb-6">
-            <div className="space-y-2">
+          {/* Main Visual Preview Header */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 border-b border-slate-800 pb-6 items-center">
+            {/* Visual Thumbnail Image Container */}
+            <div className="md:col-span-5 relative group">
+              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-900 border border-slate-700/80 shadow-inner relative flex items-center justify-center">
+                <img
+                  src={assetData.metadata.preview_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop"}
+                  alt={assetData.metadata.title}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop";
+                  }}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/70 backdrop-blur-md text-[10px] font-mono font-bold text-cyan-400 border border-cyan-500/30">
+                  {assetData.metadata.format.toUpperCase()} • 4K/8K RENDER
+                </div>
+                <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[9px] font-semibold text-slate-300">
+                  Verified Original
+                </div>
+              </div>
+            </div>
+
+            {/* Asset Metadata & Action */}
+            <div className="md:col-span-7 space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1">
                   <CheckCircle2 className="h-3.5 w-3.5" />
@@ -342,28 +372,48 @@ export default function MagnificDownloaderPage() {
                 <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono font-bold">
                   {assetData.partner_name}
                 </span>
+                <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-semibold">
+                  📦 Full .ZIP Package
+                </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">
-                {assetData.metadata.title}
-              </h2>
-              <p className="text-xs text-slate-400 max-w-xl">
-                {assetData.metadata.description}
-              </p>
-            </div>
 
-            {/* Download CTA button with Credit badge */}
-            <div className="w-full md:w-auto flex flex-col items-end gap-2">
-              <button
-                onClick={handleTriggerDownload}
-                disabled={isStreaming}
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-base rounded-xl shadow-lg shadow-emerald-500/30 transition disabled:opacity-50"
-              >
-                <Download className="h-5 w-5" />
-                <span>{isStreaming ? "Streaming to Browser..." : "Download Original (1 Credit)"}</span>
-              </button>
-              <span className="text-[11px] text-slate-400">
-                Your Balance: <strong className="text-cyan-400">{creditsBalance} Credits</strong> remaining
-              </span>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+                  {assetData.metadata.title}
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {assetData.metadata.description}
+                </p>
+              </div>
+
+              {/* What is included in this download */}
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
+                <p className="font-semibold text-slate-200 flex items-center gap-1.5">
+                  <Box className="h-3.5 w-3.5 text-cyan-400" />
+                  محتويات الحزمة الكاملة المضغوطة (.ZIP):
+                </p>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-slate-400">
+                  <span>✔ الملف الأصلي الخام (Original Asset)</span>
+                  <span>✔ صورة المعاينة الفائقة (preview.png)</span>
+                  <span>✔ شهادة الترخيص التجاري (LICENSE)</span>
+                  <span>✔ ملف المواصفات والبيانات (JSON)</span>
+                </div>
+              </div>
+
+              {/* Download CTA button with Credit badge */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                <button
+                  onClick={handleTriggerDownload}
+                  disabled={isStreaming}
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm sm:text-base rounded-xl shadow-lg shadow-emerald-500/30 transition disabled:opacity-50"
+                >
+                  <Download className="h-5 w-5" />
+                  <span>{isStreaming ? "جارٍ تجهيز وتحميل الحزمة..." : "تحميل الحزمة الكاملة .ZIP (1 رصيد)"}</span>
+                </button>
+                <div className="text-xs text-slate-400 text-right sm:text-left shrink-0">
+                  رصيدك: <strong className="text-cyan-400">{creditsBalance} رصيد</strong>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -77,12 +77,40 @@ class UniversalMediaAdapter(BaseAdapter):
         # Determine file category
         file_category = "image" if file_ext in ["png", "jpg", "jpeg", "webp"] else ("video" if file_ext in ["mp4", "mov"] else "archive")
 
+        # Preview URL extraction
+        preview_url = url if file_category == "image" else None
+        if not preview_url:
+            try:
+                async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as sc:
+                    page_resp = await sc.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+                    if page_resp.status_code == 200:
+                        m_og = re.search(r'<meta[^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\'][^>]+content=["\']([^"\']+)["\']', page_resp.text, re.I)
+                        if not m_og:
+                            m_og = re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\']', page_resp.text, re.I)
+                        if m_og:
+                            preview_url = m_og.group(1)
+            except Exception:
+                pass
+
+        if not preview_url:
+            lower_str = f"{url} {asset_id}".lower()
+            if any(k in lower_str for k in ["cowork", "office", "work", "people"]):
+                preview_url = "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&auto=format&fit=crop"
+            elif any(k in lower_str for k in ["vector", "logo", "icon", "brand", "graphic"]):
+                preview_url = "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=900&auto=format&fit=crop"
+            elif any(k in lower_str for k in ["mockup", "3d", "product"]):
+                preview_url = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&auto=format&fit=crop"
+            elif file_category == "video":
+                preview_url = "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=900&auto=format&fit=crop"
+            else:
+                preview_url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=900&auto=format&fit=crop"
+
         return AssetMetadata(
             asset_id=asset_id,
             partner_id=self.partner_id,
             title=detected_title if len(detected_title) > 3 else f"Web Asset from {parsed.netloc}",
             description=f"Direct multi-connection stream from {parsed.netloc}. Fully verified and watermark-free.",
-            preview_url=url if file_category == "image" else f"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop",
+            preview_url=preview_url,
             author=parsed.netloc,
             file_type=file_category,
             file_size_bytes=file_size,

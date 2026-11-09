@@ -45,6 +45,9 @@ yarn-error.log*
 postgres_data/
 redis_data/
 minio_data/
+*.db
+.netlify/
+frontend/out/
 
 # OS
 .DS_Store
