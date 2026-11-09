@@ -20,17 +20,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # Database & Redis
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@postgres:5432/assetbridge"
-    SYNC_DATABASE_URL: str = "postgresql://postgres:postgres@postgres:5432/assetbridge"
-    REDIS_URL: str = "redis://redis:6379/0"
+    # Database & Redis (Defaults to SQLite for local dev; PostgreSQL in Docker/Prod)
+    DATABASE_URL: str = "sqlite+aiosqlite:///./assetbridge.db"
+    SYNC_DATABASE_URL: str = "sqlite:///./assetbridge.db"
+    REDIS_URL: str = "redis://localhost:6379/0"
     
     # Celery
     CELERY_BROKER_URL: str = "redis://redis:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/2"
 
-    # S3 / MinIO Storage
-    S3_ENDPOINT_URL: str = "http://minio:9000"
+    # S3 / MinIO Storage (Defaults to localhost for local dev; minio in Docker/Prod)
+    S3_ENDPOINT_URL: str = "http://localhost:9000"
     S3_PUBLIC_URL: str = "http://localhost:9000"
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin123"
@@ -91,3 +91,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

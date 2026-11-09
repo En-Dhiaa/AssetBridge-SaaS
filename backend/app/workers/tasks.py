@@ -42,3 +42,4 @@ def process_background_download(self, job_id: str, download_url: str, filename: 
         "signed_url": signed_url,
         "file_size": len(buffer)
     }
+

@@ -120,3 +120,4 @@ class PartnerWebhookDelivery(Base):
     response_code = Column(Integer, nullable=True)
     attempts = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
+

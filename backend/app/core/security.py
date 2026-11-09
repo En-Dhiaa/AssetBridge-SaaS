@@ -170,28 +170,44 @@ def decode_access_token(token: str) -> dict:
 
 
 # ==============================================================================
-# 4. Redis Sliding Window Rate Limiter
+# 4. Sliding Window Rate Limiter (Redis with In-Memory Fallback)
 # ==============================================================================
-async def check_rate_limit(redis_client: aioredis.Redis, key: str, max_requests: int, window_seconds: int = 60) -> bool:
+_memory_rate_limits: Dict[str, list[float]] = {}
+
+async def check_rate_limit(redis_client: Optional[aioredis.Redis], key: str, max_requests: int, window_seconds: int = 60) -> bool:
     """
-    Sliding window log rate limiter using Redis sorted set (ZSET).
+    Sliding window log rate limiter using Redis sorted set (ZSET),
+    with automatic in-memory fallback for offline/local environments.
     """
     now = datetime.now(timezone.utc).timestamp()
     window_start = now - window_seconds
     rate_key = f"rate_limit:{key}"
 
-    pipe = redis_client.pipeline()
-    # Remove entries older than window
-    pipe.zremrangebyscore(rate_key, 0, window_start)
-    # Count requests in window
-    pipe.zcard(rate_key)
-    # Add current timestamp
-    pipe.zadd(rate_key, {str(now): now})
-    # Set expire on key
-    pipe.expire(rate_key, window_seconds + 5)
-    results = await pipe.execute()
+    if redis_client:
+        try:
+            pipe = redis_client.pipeline()
+            pipe.zremrangebyscore(rate_key, 0, window_start)
+            pipe.zcard(rate_key)
+            pipe.zadd(rate_key, {str(now): now})
+            pipe.expire(rate_key, window_seconds + 5)
+            results = await pipe.execute()
 
-    current_requests = results[1]
-    if current_requests >= max_requests:
-        return False
-    return True
+            current_requests = results[1]
+            if current_requests >= max_requests:
+                return False
+            return True
+        except Exception:
+            pass  # Fallback to memory
+
+    # In-memory sliding window
+    if rate_key not in _memory_rate_limits:
+        _memory_rate_limits[rate_key] = []
+    
+    # Filter out timestamps older than window
+    timestamps = [t for t in _memory_rate_limits[rate_key] if t > window_start]
+    timestamps.append(now)
+    _memory_rate_limits[rate_key] = timestamps
+
+    return len(timestamps) <= max_requests
+
+

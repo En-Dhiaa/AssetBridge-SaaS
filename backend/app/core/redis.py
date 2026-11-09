@@ -1,37 +1,78 @@
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 import json
+import time
 import redis.asyncio as aioredis
 from app.config import settings
 
-redis_pool = aioredis.ConnectionPool.from_url(
-    settings.REDIS_URL,
-    max_connections=50,
-    decode_responses=True
-)
-
-
-def get_redis_client() -> aioredis.Redis:
-    return aioredis.Redis(connection_pool=redis_pool)
+# Global in-memory fallback cache for local dev when Redis is not running
+_memory_cache: Dict[str, tuple[str, float]] = {}
 
 
 class CacheManager:
-    @staticmethod
-    async def get_cached_json(key: str) -> Optional[Any]:
-        r = get_redis_client()
-        val = await r.get(key)
-        if val:
+    _redis_client: Optional[aioredis.Redis] = None
+    _redis_available: Optional[bool] = None
+
+    @classmethod
+    def get_redis(cls) -> Optional[aioredis.Redis]:
+        if cls._redis_client is None and cls._redis_available is not False:
             try:
-                return json.loads(val)
+                cls._redis_client = aioredis.from_url(
+                    settings.REDIS_URL,
+                    decode_responses=True,
+                    socket_connect_timeout=1.5
+                )
             except Exception:
+                cls._redis_available = False
+        return cls._redis_client
+
+    @classmethod
+    async def get_cached_json(cls, key: str) -> Optional[Any]:
+        r = cls.get_redis()
+        if r and cls._redis_available is not False:
+            try:
+                val = await r.get(key)
+                if val:
+                    return json.loads(val)
                 return None
+            except Exception:
+                cls._redis_available = False
+
+        # In-memory fallback
+        if key in _memory_cache:
+            val_str, expires_at = _memory_cache[key]
+            if time.time() < expires_at:
+                try:
+                    return json.loads(val_str)
+                except Exception:
+                    pass
+            else:
+                del _memory_cache[key]
         return None
 
-    @staticmethod
-    async def set_cached_json(key: str, data: Any, ttl_seconds: int = 600) -> None:
-        r = get_redis_client()
-        await r.setex(key, ttl_seconds, json.dumps(data))
+    @classmethod
+    async def set_cached_json(cls, key: str, data: Any, ttl_seconds: int = 600) -> None:
+        val_str = json.dumps(data)
+        r = cls.get_redis()
+        if r and cls._redis_available is not False:
+            try:
+                await r.setex(key, ttl_seconds, val_str)
+                return
+            except Exception:
+                cls._redis_available = False
 
-    @staticmethod
-    async def delete_key(key: str) -> None:
-        r = get_redis_client()
-        await r.delete(key)
+        # In-memory fallback
+        _memory_cache[key] = (val_str, time.time() + ttl_seconds)
+
+    @classmethod
+    async def delete_key(cls, key: str) -> None:
+        r = cls.get_redis()
+        if r and cls._redis_available is not False:
+            try:
+                await r.delete(key)
+            except Exception:
+                pass
+        _memory_cache.pop(key, None)
+
+
+def get_redis_client() -> Optional[aioredis.Redis]:
+    return CacheManager.get_redis()

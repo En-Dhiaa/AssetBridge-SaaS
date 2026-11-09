@@ -17,3 +17,4 @@ celery_app.conf.update(
     task_time_limit=3600,
     worker_concurrency=8,
 )
+

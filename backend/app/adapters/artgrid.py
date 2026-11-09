@@ -114,3 +114,4 @@ class ArtgridAdapter(BaseAdapter):
 
     async def dispatch_partner_webhook(self, event_data: Dict[str, Any], webhook_secret: Optional[str] = None) -> bool:
         return True
+

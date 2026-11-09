@@ -252,3 +252,4 @@ npx cap open ios
 ## 🛡️ License & Compliance Statement
 
 AssetBridge SaaS is engineered strictly for authorized enterprise license holders. All downloads are executed on behalf of authenticated accounts possessing documented commercial distribution agreements.
+

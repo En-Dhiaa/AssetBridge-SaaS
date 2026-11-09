@@ -208,3 +208,4 @@ async def toggle_partner_kill_switch(
         "reason": req.reason,
         "message": f"Partner adapter '{req.partner_id}' status updated to {'ENABLED' if req.is_active else 'DISABLED'}"
     }
+

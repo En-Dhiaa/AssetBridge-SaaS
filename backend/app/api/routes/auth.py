@@ -90,3 +90,4 @@ async def get_my_profile(user: User = Depends(get_current_user)):
         "full_name": user.full_name,
         "is_superuser": user.is_superuser
     }
+

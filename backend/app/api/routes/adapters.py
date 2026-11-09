@@ -93,3 +93,4 @@ async def connect_partner_account(
         "partner_id": req.partner_id,
         "message": f"Partner account '{req.partner_id}' connected and credentials encrypted with AES-256-GCM."
     }
+

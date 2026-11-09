@@ -61,3 +61,4 @@ async def root():
         "api_v1": settings.API_V1_STR,
         "compliance": f"{settings.API_V1_STR}/compliance/agreements"
     }
+

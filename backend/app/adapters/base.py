@@ -86,3 +86,4 @@ class BaseAdapter(ABC):
     async def dispatch_partner_webhook(self, event_data: Dict[str, Any], webhook_secret: Optional[str] = None) -> bool:
         """Dispatches an audit fulfillment webhook event back to the partner system if mandated by SLA."""
         pass
+

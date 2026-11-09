@@ -67,3 +67,4 @@ class AdapterRegistry:
 
 
 registry = AdapterRegistry()
+

@@ -9,3 +9,4 @@ __all__ = [
     "adapters_router",
     "auth_router",
 ]
+

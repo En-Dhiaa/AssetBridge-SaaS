@@ -144,3 +144,4 @@ class AuditLogger:
             expected_prev_hash = entry.current_hash
 
         return True
+

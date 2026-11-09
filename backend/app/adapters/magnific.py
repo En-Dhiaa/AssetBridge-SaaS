@@ -180,3 +180,4 @@ class MagnificAdapter(BaseAdapter):
                 return res.status_code in (200, 201, 202)
         except Exception:
             return False
+
