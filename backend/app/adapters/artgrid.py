@@ -88,7 +88,7 @@ class ArtgridAdapter(BaseAdapter):
             raw_response={"clip_id": asset_id, "codec": "ProRes 422 HQ"}
         )
 
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         token = auth_token or settings.ARTGRID_API_KEY
         return DownloadInfo(
             asset_id=asset_id,

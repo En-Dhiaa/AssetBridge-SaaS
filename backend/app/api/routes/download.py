@@ -166,7 +166,7 @@ async def stream_download_asset(
             token = ""
 
     asset_id = adapter.extract_asset_id(clean_url)
-    download_info: DownloadInfo = await adapter.get_download_info(asset_id, token, user.id)
+    download_info: DownloadInfo = await adapter.get_download_info(asset_id, token, user.id, url=clean_url)
 
     # Probe upstream headers for size
     size, content_type, can_range = await download_engine.fetch_remote_headers(
@@ -237,7 +237,7 @@ async def dispatch_background_job(
 
     asset_id = adapter.extract_asset_id(clean_url)
     token = ""
-    download_info = await adapter.get_download_info(asset_id, token, user.id)
+    download_info = await adapter.get_download_info(asset_id, token, user.id, url=clean_url)
 
     job = DownloadJob(
         user_id=user.id,

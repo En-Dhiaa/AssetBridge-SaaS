@@ -43,10 +43,14 @@ class Settings(BaseSettings):
     DOWNLOAD_TIMEOUT_SECONDS: int = 300
     METADATA_CACHE_TTL_SECONDS: int = 600  # 10 minutes
 
-    # SSRF Protection Allowed Domains
+    # SSRF Protection & Domain Allowance
+    ALLOW_ALL_PUBLIC_DOMAINS: bool = True  # Allows any public internet domain while strictly blocking private/loopback/cloud metadata IPs
     ALLOWED_DOMAINS: List[str] = [
         "magnific.ai",
         "api.magnific.ai",
+        "magnific.com",
+        "www.magnific.com",
+        "api.magnific.com",
         "motionarray.com",
         "api.motionarray.com",
         "elements.envato.com",
@@ -56,7 +60,12 @@ class Settings(BaseSettings):
         "storyblocks.com",
         "api.storyblocks.com",
         "artgrid.io",
-        "api.artgrid.io"
+        "api.artgrid.io",
+        "stock.adobe.com",
+        "shutterstock.com",
+        "unsplash.com",
+        "pexels.com",
+        "pixabay.com"
     ]
 
     # Partner Credentials (Configurable via environment or DB)

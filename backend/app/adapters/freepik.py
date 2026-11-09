@@ -84,7 +84,7 @@ class FreepikAdapter(BaseAdapter):
             raw_response={"resource_id": asset_id}
         )
 
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         target_api_url = f"{self.base_url}/resources/{asset_id}/download"
         token = auth_token or settings.FREEPIK_API_KEY
         headers = {"x-freepik-api-key": token}

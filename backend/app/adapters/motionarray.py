@@ -91,7 +91,7 @@ class MotionArrayAdapter(BaseAdapter):
             raw_response={"item_id": asset_id, "resolution": "3840x2160"}
         )
 
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         target_api_url = f"{self.base_url}/catalog/items/{asset_id}/download-ticket"
         token = auth_token or settings.MOTIONARRAY_CLIENT_SECRET
         headers = {"Authorization": f"Bearer {token}", "User-Agent": "AssetBridge-SaaS/1.0"}

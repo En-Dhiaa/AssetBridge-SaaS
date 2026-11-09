@@ -70,7 +70,7 @@ class BaseAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         """
         Requests an authorized, signed temporary download stream URL from the partner.
         Registers the commercial license certificate for compliance.

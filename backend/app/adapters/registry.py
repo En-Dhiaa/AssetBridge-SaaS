@@ -6,7 +6,7 @@ from app.adapters.envato import EnvatoAdapter
 from app.adapters.freepik import FreepikAdapter
 from app.adapters.storyblocks import StoryblocksAdapter
 from app.adapters.artgrid import ArtgridAdapter
-from app.adapters.public_fallback import PublicFallbackAdapter
+from app.adapters.public_fallback import UniversalMediaAdapter
 
 
 class AdapterRegistry:
@@ -26,7 +26,7 @@ class AdapterRegistry:
         self.register(FreepikAdapter())
         self.register(StoryblocksAdapter())
         self.register(ArtgridAdapter())
-        self.register(PublicFallbackAdapter())
+        self.register(UniversalMediaAdapter())
 
     def register(self, adapter: BaseAdapter) -> None:
         self._adapters[adapter.partner_id] = adapter
@@ -40,17 +40,17 @@ class AdapterRegistry:
     def get_adapter_for_url(self, url: str) -> Optional[BaseAdapter]:
         """
         Iterates through active adapters and resolves the matching strategy.
-        Enterprise partner adapters are prioritized over public fallbacks.
+        Enterprise partner adapters are prioritized over universal fallback.
         """
         # First check dedicated commercial partner adapters
         for partner_id, adapter in self._adapters.items():
-            if partner_id == "public_fallback":
+            if partner_id in ("public_fallback", "universal"):
                 continue
             if adapter.is_active and adapter.can_handle(url):
                 return adapter
 
-        # If no partner adapter claimed it, try public fallback
-        fallback = self._adapters.get("public_fallback")
+        # If no partner adapter claimed it, use universal web streamer
+        fallback = self._adapters.get("universal") or self._adapters.get("public_fallback")
         if fallback and fallback.is_active and fallback.can_handle(url):
             return fallback
 
@@ -67,4 +67,3 @@ class AdapterRegistry:
 
 
 registry = AdapterRegistry()
-

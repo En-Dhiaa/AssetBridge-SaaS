@@ -97,7 +97,7 @@ class StoryblocksAdapter(BaseAdapter):
             raw_response={"item_id": asset_id}
         )
 
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         return DownloadInfo(
             asset_id=asset_id,
             partner_id=self.partner_id,

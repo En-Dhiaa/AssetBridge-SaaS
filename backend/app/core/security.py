@@ -93,21 +93,24 @@ def validate_url_against_ssrf(url: str, extra_allowed_domains: Optional[list[str
     if not hostname:
         raise SSRFViolationException("URL has no valid hostname")
 
-    allowed = set(settings.ALLOWED_DOMAINS)
-    if extra_allowed_domains:
-        allowed.update(extra_allowed_domains)
+    allow_all_public = getattr(settings, "ALLOW_ALL_PUBLIC_DOMAINS", True)
+    if not allow_all_public:
+        allowed = set(settings.ALLOWED_DOMAINS)
+        if extra_allowed_domains:
+            allowed.update(extra_allowed_domains)
 
-    # Check hostname or parent domain in allowlist
-    domain_match = False
-    for allowed_domain in allowed:
-        if hostname == allowed_domain or hostname.endswith("." + allowed_domain):
-            domain_match = True
-            break
+        # Check hostname or parent domain in allowlist
+        domain_match = False
+        for allowed_domain in allowed:
+            if hostname == allowed_domain or hostname.endswith("." + allowed_domain):
+                domain_match = True
+                break
 
-    if not domain_match:
-        raise SSRFViolationException(f"Domain '{hostname}' is not in the authorized partner allowlist")
+        if not domain_match:
+            raise SSRFViolationException(f"Domain '{hostname}' is not in the authorized partner allowlist")
 
-    # Resolve IP addresses and inspect for forbidden subnets
+    # Resolve IP addresses and inspect for forbidden subnets (SSRF Protection)
+    # Strictly disallows loopback (127.0.0.1), private RFC1918 subnets, link-local, and cloud metadata (169.254.169.254)
     try:
         addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
     except socket.gaierror:

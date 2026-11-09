@@ -93,7 +93,7 @@ class EnvatoAdapter(BaseAdapter):
             raw_response={"item_code": asset_id, "cleared": True}
         )
 
-    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str) -> DownloadInfo:
+    async def get_download_info(self, asset_id: str, auth_token: str, user_id: str, url: Optional[str] = None) -> DownloadInfo:
         target_api_url = f"{self.base_url}/catalog/items/{asset_id}/download-url"
         token = auth_token or settings.ENVATO_API_TOKEN
         headers = {"Authorization": f"Bearer {token}", "User-Agent": "AssetBridge-SaaS/1.0"}
